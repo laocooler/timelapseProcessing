@@ -11,9 +11,24 @@ def create_dir_if_not_exists(dir_path):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
+def process_images(name, func, images_arr, grayscale = False):
+    create_dir_if_not_exists(f'{results_dir}/{name}')
+
+    result_image = func(images_arr)
+    out = Image.fromarray(result_image, mode=("L" if grayscale == True else "RGB"))
+    out.save(f"{results_dir}/{name}/{name}_{i}.png")
+
+def average(images_arr):
+    return numpy.array(numpy.round(numpy.average(images_arr, axis=0)), dtype=numpy.uint8)
+
+def maximize(images_arr):
+    return numpy.array(numpy.round(numpy.amax(images_arr, axis=0)), dtype=numpy.uint8)
+
 # Paths
 sources_dir = "sources"
 results_dir = "results"
+
+create_dir_if_not_exists(results_dir)
 
 # Access all image files in the source directory
 imlist = [f"{sources_dir}/{filename}" for filename in os.listdir(sources_dir)]
@@ -48,38 +63,14 @@ for i in range(1, N):
     # i = N
     print('iteration', i)
 
-    # Average
-    subdir = 'average'
-    create_dir_if_not_exists(f'{results_dir}/{subdir}')
+    # Average color images
+    process_images('average', average, color_arr[:i])
 
-    avg = numpy.array(numpy.round(numpy.average(color_arr[:i], axis=0)), dtype=numpy.uint8)
-    out = Image.fromarray(avg, mode="RGB")
-    out.save(f"{results_dir}/{subdir}/_average_{i}.png")
-
-    # Max
-    subdir = 'max'
-    create_dir_if_not_exists(f'{results_dir}/{subdir}')
-
-    max = numpy.array(numpy.round(numpy.amax(
-        color_arr[:i], axis=0)), dtype=numpy.uint8)
-    out = Image.fromarray(max, mode="RGB")
-    out.save(f"{results_dir}/{subdir}/_max_{i}.png")
-
-    # Average max gray
-    print("- Getting mask")
-    subdir = 'max_gray'
-    create_dir_if_not_exists(f'{results_dir}/{subdir}')
-
-    max_gray = numpy.amax(grayscale_arr[:i], axis=0)
-    out = Image.fromarray(numpy.array(
-        numpy.round(max_gray), dtype=numpy.uint8), mode="L")
-    out.save(f"{results_dir}/{subdir}/_max_gray_{i}.png")
+    # Maximize color images
+    process_images('max', maximize, color_arr[:i])
 
     # Average gray
-    subdir = 'average_gray'
-    create_dir_if_not_exists(f'{results_dir}/{subdir}')
+    process_images('average_gray', average, grayscale_arr[:i], grayscale=True)
 
-    avg_gray = numpy.array(numpy.round(
-        numpy.average(grayscale_arr[:i], axis=0)), dtype=numpy.uint8)
-    out = Image.fromarray(avg_gray, mode="L")
-    out.save(f"{results_dir}/{subdir}/_average_gray_{i}.png")
+    # Max gray
+    process_images('average_max', maximize, grayscale_arr[:i], grayscale=True)
